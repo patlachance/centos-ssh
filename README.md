@@ -22,7 +22,7 @@ SSH access is by public key authentication and, by default, the [Vagrant](http:/
 
 ### SSH Alternatives
 
-SSH is not required in order to access a terminal for the running container. The simplest method is to use the docker exec command to run bash (or sh) as follows:
+SSH is not required if all you need is to access the terminal of a running container. The simplest method is to use the docker exec command to run bash (or sh) as follows:
 
 ```
 $ docker exec -it {container-name-or-id} bash

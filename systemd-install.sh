@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Set Docker command, usefull if required to disable TLS verifying...
+DOCKER='docker --tlsverify=0'
+
 # Change working directory
 DIR_PATH="$( if [[ $( echo "${0%/*}" ) != $( echo "${0}" ) ]] ; then cd "$( echo "${0%/*}" )"; fi; pwd )"
 if [[ ${DIR_PATH} == */* ]] && [[ ${DIR_PATH} != $( pwd ) ]] ; then
@@ -16,7 +19,7 @@ have_docker_container_name ()
 		return 1
 	fi
 
-	if [[ -n $(docker ps -a | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
+	if [[ -n $($DOCKER ps -a | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
 		return 0
 	fi
 
@@ -42,7 +45,7 @@ is_docker_container_name_running ()
 		return 1
 	fi
 
-	if [[ -n $(docker ps | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
+	if [[ -n $($DOCKER ps | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
 		return 0
 	fi
 
@@ -56,14 +59,14 @@ remove_docker_container_name ()
 	if have_docker_container_name ${NAME}; then
 		if is_docker_container_name_running ${NAME}; then
 			echo "Stopping container ${NAME}"
-			docker stop ${NAME} &> /dev/null
+			$DOCKER stop ${NAME} &> /dev/null
 
 			if [[ ${?} -ne 0 ]]; then
 				return 1
 			fi
 		fi
 		echo "Removing container ${NAME}"
-		docker rm ${NAME} &> /dev/null
+		$DOCKER rm ${NAME} &> /dev/null
 
 		if [[ ${?} -ne 0 ]]; then
 			return 1
@@ -81,7 +84,7 @@ show_docker_image ()
 		NAME_PARTS[1]='latest'
 	fi
 
-	docker images | \
+	$DOCKER images | \
 		awk \
 			-v FS='[ ]+' \
 			-v pattern="^${NAME_PARTS[0]}[ ]+${NAME_PARTS[1]} " \

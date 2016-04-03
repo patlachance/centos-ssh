@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Set Docker command, usefull if required to disable TLS verifying...
+DOCKER='docker --tlsverify=0'
+
 # Change working directory
 DIR_PATH="$( if [[ $( echo "${0%/*}" ) != $( echo "${0}" ) ]]; then cd "$( echo "${0%/*}" )"; fi; pwd )"
 if [[ ${DIR_PATH} == */* ]] && [[ ${DIR_PATH} != $( pwd ) ]]; then
@@ -16,7 +19,7 @@ have_docker_container_name ()
 		return 1
 	fi
 
-	if [[ -n $(docker ps -a | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
+	if [[ -n $($DOCKER ps -a | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
 		return 0
 	fi
 
@@ -31,7 +34,7 @@ is_docker_container_name_running ()
 		return 1
 	fi
 
-	if [[ -n $(docker ps | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
+	if [[ -n $($DOCKER ps | awk -v pattern="^${NAME}$" '$NF ~ pattern { print $NF; }') ]]; then
 		return 0
 	fi
 
@@ -46,7 +49,7 @@ show_docker_container_name_status ()
 		return 1
 	fi
 
-	docker ps | \
+	$DOCKER ps | \
 		awk \
 			-v pattern="${NAME}$" \
 			'$NF ~ pattern { print $0; }'
@@ -61,14 +64,14 @@ remove_docker_container_name ()
 	if have_docker_container_name ${NAME}; then
 		if is_docker_container_name_running ${NAME}; then
 			echo "Stopping container ${NAME}"
-			docker stop ${NAME} &> /dev/null
+			$DOCKER stop ${NAME} &> /dev/null
 
 			if [[ ${?} -ne 0 ]]; then
 				return 1
 			fi
 		fi
 		echo "Removing container ${NAME}"
-		docker rm ${NAME} &> /dev/null
+		$DOCKER rm ${NAME} &> /dev/null
 
 		if [[ ${?} -ne 0 ]]; then
 			return 1
@@ -88,7 +91,7 @@ if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && ! have_docker_container_name ${VOLU
 
 	(
 	set -x
-	docker run \
+	$DOCKER run \
 		--name ${VOLUME_CONFIG_NAME} \
 		-v ${DOCKER_VOLUME_MAPPING} \
 		${DOCKER_IMAGE_REPOSITORY_NAME} \
@@ -100,7 +103,7 @@ if [[ ${VOLUME_CONFIG_ENABLED} == true ]] && ! have_docker_container_name ${VOLU
 		echo "Populating configuration volume."
 		(
 		set -x
-		docker cp \
+		$DOCKER cp \
 			./etc/services-config/. \
 			${DOCKER_VOLUME_MAPPING};
 		)
@@ -130,7 +133,7 @@ fi
 # In a sub-shell set xtrace - prints the docker command to screen for reference
 (
 set -xe
-docker run \
+$DOCKER run \
 	${DOCKER_OPERATOR_OPTIONS} \
 	--name ${DOCKER_NAME} \
 	-p ${DOCKER_HOST_PORT_SSH:-}:22 \
@@ -142,7 +145,7 @@ docker run \
 # To connect: sftp -P 2021 -i ~/.ssh/id_rsa_insecure app-sftp@docker-host
 # (
 # set -xe
-# docker run \
+# $DOCKER run \
 # 	${DOCKER_OPERATOR_OPTIONS} \
 # 	--name ${DOCKER_NAME} \
 # 	-p ${DOCKER_HOST_PORT_SFTP:-}:22 \
@@ -157,7 +160,7 @@ docker run \
 # Forced SFTP + apache-php linked volume + persistent host keys
 # (
 # set -xe
-# docker run \
+# $DOCKER run \
 # 	${DOCKER_OPERATOR_OPTIONS} \
 # 	--name ${DOCKER_NAME} \
 # 	-p ${DOCKER_HOST_PORT_SFTP:-}:22 \
@@ -175,7 +178,7 @@ docker run \
 # Forced SFTP + apache-php linked volume (writeable home directory)
 # (
 # set -xe
-# docker run \
+# $DOCKER run \
 # 	${DOCKER_OPERATOR_OPTIONS} \
 # 	--name ${DOCKER_NAME} \
 # 	-p ${DOCKER_HOST_PORT_SFTP:-}:22 \
@@ -195,7 +198,7 @@ docker run \
 # Salt: salt/pepper.pot.
 # (
 # set -xe
-# docker run \
+# $DOCKER run \
 # 	${DOCKER_OPERATOR_OPTIONS} \
 # 	--name ${DOCKER_NAME} \
 # 	-p ${DOCKER_HOST_PORT_SFTP:-}:22 \
@@ -243,7 +246,7 @@ fi
 
 # 	(
 # 	set -xe
-# 	docker run \
+# 	$DOCKER run \
 # 		${DOCKER_OPERATOR_OPTIONS} \
 # 		--name ${DOCKER_NAME_LINK_HOST} \
 # 		-p ${DOCKER_HOST_PORT_SSH:-}:22 \

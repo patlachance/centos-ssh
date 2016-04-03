@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Set Docker command, usefull if required to disable TLS verifying...
+DOCKER='docker --tlsverify=0'
+
 # Change working directory
 DIR_PATH="$( if [[ $( echo "${0%/*}" ) != $( echo "${0}" ) ]]; then cd "$( echo "${0%/*}" )"; fi; pwd )"
 if [[ ${DIR_PATH} == */* ]] && [[ ${DIR_PATH} != $( pwd ) ]]; then
@@ -18,7 +21,7 @@ show_docker_image ()
 		NAME_PARTS[1]='latest'
 	fi
 
-	docker images | \
+	$DOCKER images | \
 		awk \
 			-v FS='[ ]+' \
 			-v pattern="^${NAME_PARTS[0]}[ ]+${NAME_PARTS[1]} " \
@@ -37,7 +40,7 @@ else
 fi
 
 # Build from working directory
-docker build --no-cache=${NO_CACHE} -t ${DOCKER_IMAGE_REPOSITORY_NAME} .
+$DOCKER build --no-cache=${NO_CACHE} -t ${DOCKER_IMAGE_REPOSITORY_NAME} .
 
 if [[ ${?} -eq 0 ]]; then
 	printf -- "\n%s:\n" 'Docker image'
